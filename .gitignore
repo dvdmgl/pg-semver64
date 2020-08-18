@@ -6,3 +6,6 @@ regression.diffs
 regression.out
 /sql/semver--?.??.?.sql
 /semver-*
+/trash
+docker-compose.yaml
+init.sql

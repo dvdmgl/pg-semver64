@@ -1,21 +1,21 @@
 {
-   "name": "semver",
+   "name": "semver64",
    "abstract": "A semantic version data type",
    "description": "Provides a data type the enforces the Semantic Version format and includes support btree and hash indexing.",
-   "version": "0.30.0",
+   "version": "0.1.0",
    "maintainer": [
-      "David E. Wheeler <david@justatheory.com>",
+      "David Miguel <https://github.com/dvdmgl>",
       "Sam Vilain <sam@vilain.net>",
       "Tom Davis <tom@recursivedream.com>",
       "Xavier Caron <xcaron@gmail.com>"
    ],
    "license": "postgresql",
    "provides": {
-      "semver": {
+      "semver64": {
          "abstract": "A semantic version data type",
-         "file": "sql/semver.sql",
-         "docfile": "doc/semver.mmd",
-         "version": "0.30.0"
+         "file": "sql/semver64.sql",
+         "docfile": "doc/semver64.mmd",
+         "version": "0.1.0"
       }
    },
    "prereqs": {
@@ -32,15 +32,15 @@
    },
    "resources": {
       "bugtracker": {
-         "web": "https://github.com/theory/pg-semver/issues/"
+         "web": "https://github.com/dvdmgl/pg-semver64/issues/"
       },
       "repository": {
-         "url": "git://github.com/theory/pg-semver.git",
-         "web": "https://github.com/theory/pg-semver/",
+         "url": "git://github.com/dvdmgl/pg-semver64.git",
+         "web": "https://github.com/dvdmgl/pg-semver64/",
          "type": "git"
       }
    },
-   "generated_by": "David E. Wheeler",
+   "generated_by": "David Miguel",
    "meta-spec": {
       "version": "1.0.0",
       "url": "https://pgxn.org/meta/spec.txt"
@@ -48,6 +48,7 @@
    "tags": [
       "semantic version",
       "semver",
+      "semver64",
       "version",
       "version number"
    ]

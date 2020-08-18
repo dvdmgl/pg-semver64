@@ -1,5 +1,12 @@
-Revision history for PostgreSQL extension semver.
+Revision history for PostgreSQL extension semver64.
 
+0.1.0
+      - fork of pg-semver
+      - 64 bit version numbers
+      - pcre regex from https://semver.org
+      - binary support
+
+Revision history for PostgreSQL extension semver64.
 0.30.1
       - Added a workaround for an LLVM bitcode compile error. Thanks to
         @mark-s-a for the report (#40).

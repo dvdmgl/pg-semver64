@@ -1,26 +1,28 @@
-semver 0.30.0
+semver64 0.1.0
 =============
 
 Synopsis
 --------
 
-    CREATE EXTENSION semver;
+    CREATE EXTENSION semver64;
 
-    SELECT '1.2.1'::semver;
-     semver
+    SELECT '1.2.1'::semver64;
+     semver64
     --------
      1.2.1
 
-    SELECT '1.2.0'::semver > '1.2.0-b1'::semver;
+    SELECT '1.2.0'::semver64 > '1.2.0-b1'::semver64;
      ?column?
     ----------
      t
 
 Description
 -----------
+This library is a fork of https://github.com/theory/pg-semver, with 64 bit
+version numbers.
 
 This library contains a single PostgreSQL extension, a semantic version data
-type called `semver`. It's an implementation of the version number format
+type called `semver64`. It's an implementation of the version number format
 specified by the
 [Semantic Versioning 2.0.0 Specification](https://semver.org/spec/v2.0.0.html).
 
@@ -69,46 +71,19 @@ a data type and comparison operators, are:
    `1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta < 1.0.0-beta.2 <
    1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0`.
 
-🚨 v0.30.0 Upgrade Compatibility Warning 🚨
--------------------------------------------
-
-Prior to v0.30.0, the semver extension incorrectly allowed some invalid
-prerelease and build metadata values. Details below, but *BEFORE YOU UPGRADE*
-from an earlier version, we strongly recommend that you check for and repair any
-invalid semvers. You can find them using the official
-[SemVer regular expression](https://regex101.com/r/vkijKf/1/) like so
-(replace `name`, `version`, and `packages` as appropriate for your database):
-
-``` sql
-SELECT name, version FROM packages
- WHERE version::text !~ '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$';
- ```
-
-If no rows are returned, you should be good to go. If there are results, here are
-Examples of invalid semantic versions and how they should be repaired.
-
-```
-Invalid             Valid SemVer
------------         ----------------------------
-1.0.0-02799    ->   1.0.0-2799
-1.0.0-0.02     ->   1.0.0-0.2
-1.0.0-.20      ->   1.0.0-0.20
-1.0.0+0+20     ->   1.0.0+0-20  or  1.0.0+0.20
-1.0.0+.af      ->   1.0.0+0.af  or  1.0.0+af
-```
 
 Usage
 -----
 
 Add the extension to a database:
 
-    CREATE EXTENSION semver;
+    CREATE EXTENSION semver64;
 
 Now, use it like any other data type. Here's an example in a table:
 
     CREATE TABLE extensions (
         name        TEXT,
-        version     SEMVER,
+        version     SEMVER64,
         description TEXT,
         PRIMARY KEY (name, version)
     );
@@ -164,61 +139,45 @@ Interface
 
 ### Operators ###
 
- Operator | Description                               | Example                             | Result
-----------|-------------------------------------------|-------------------------------------|--------
- `=`      | Are semvers equivalent                    | '1.2.0'semver = '1.2.00'::semver    | `t`
- `<>`     | Are semvers different                     | '1.2.0'semver <> '1.2.00'::semver   | `f`
- `<`      | Is semver less than right semver          | '3.4.0-b1'semver < '3.4.0'::semver  | `t`
- `<=`     | Is semver less than or equal to semver    | '3.4.0-b1'semver <= '3.4.0'::semver | `t`
- `>`      | Is semver greater than right semver       | '3.4.0-b1'semver > '3.4.0'::semver  | `f`
- `>=`     | Is semver greater than or equal to semver | '3.4.0-b1'semver >= '3.4.0'::semver | `f`
+ Operator | Description                               | Example                                 | Result
+----------|-------------------------------------------|-----------------------------------------|--------
+ `=`      | Are semvers equivalent                    | '1.2.0'semver64 = '1.2.00'::semver64    | `t`
+ `<>`     | Are semvers different                     | '1.2.0'semver64 <> '1.2.00'::semver64   | `f`
+ `<`      | Is semver less than right semver          | '3.4.0-b1'semver64 < '3.4.0'::semver64  | `t`
+ `<=`     | Is semver less than or equal to semver    | '3.4.0-b1'semver64 <= '3.4.0'::semver64 | `t`
+ `>`      | Is semver greater than right semver       | '3.4.0-b1'semver64 > '3.4.0'::semver64  | `f`
+ `>=`     | Is semver greater than or equal to semver | '3.4.0-b1'semver64 >= '3.4.0'::semver64 | `f`
 
 ### Functions ###
 
- Function                        | Description                     | Example                                   | Result
----------------------------------|---------------------------------|-------------------------------------------|----------
- `to_semver(text)`               | Parse semver from text          | `to_semver('1.02')`                       | `1.2.0`
- `is_semver(text)`               | Test semver text                | `is_semver('1.2.0')`                       | true
- `semver(text)`                  | Cast text to semver             | `semver('1.2.1')`                         | `1.2.1`
- `semver(numeric)`               | Cast numeric to semver          | `semver(1.2)`                             | `1.2.0`
- `semver(real)`                  | Cast real to semver             | `semver(12.0::real)`                      | `12.0.0`
- `semver(double precision)`      | Cast double precision to semver | `semver(9.2::double precision)`           | `9.2.0`
- `semver(integer)`               | Cast integer to semver          | `semver(42::integer)`                     | `42.0.0`
- `semver(bigint)`                | Cast bigint to semver           | `semver(19::bigint)`                      | `19.0.0`
- `semver(smallint)`              | Cast smallint to semver         | `semver(2::smallint)`                     | `2.0.0`
- `text(semver)`                  | Cast semver to text             | `text('1.2.54'::semver)`                  | `1.2.54`
- `get_semver_major(semver)`      | Get major version part          | `get_semver_major('4.2.0')`               | `4`
- `get_semver_minor(semver)`      | Get minor version part          | `get_semver_minor('4.2.0')`               | `2`
- `get_semver_patch(semver)`      | Get patch version part          | `get_semver_patch('4.2.0')`               | `0`
- `get_semver_prerelease(semver)` | Get prerelease version part     | `get_semver_prerelease('2.1.0-b2+bfb13')` | `b2`
+ Function                          | Description                     | Example                                     | Result
+-----------------------------------|---------------------------------|---------------------------------------------|----------
+ `to_semver64(text)`               | Parse semver from text          | `to_semver64('1.02')`                       | `1.2.0`
+ `is_semver64(text)`               | Test semver text                | `is_semver64('1.2.0')`                      | true
+ `semver64(text)`                  | Cast text to semver             | `semver64('1.2.1')`                         | `1.2.1`
+ `semver64(numeric)`               | Cast numeric to semver          | `semver64(1.2)`                             | `1.2.0`
+ `semver64(real)`                  | Cast real to semver             | `semver64(12.0::real)`                      | `12.0.0`
+ `semver64(double precision)`      | Cast double precision to semver | `semver64(9.2::double precision)`           | `9.2.0`
+ `semver64(integer)`               | Cast integer to semver          | `semver64(42::integer)`                     | `42.0.0`
+ `semver64(bigint)`                | Cast bigint to semver           | `semver64(19::bigint)`                      | `19.0.0`
+ `semver64(smallint)`              | Cast smallint to semver         | `semver64(2::smallint)`                     | `2.0.0`
+ `text(semver64)`                  | Cast semver to text             | `text('1.2.54'::semver64)`                  | `1.2.54`
+ `get_semver64_major(semver)`      | Get major version part          | `get_semver64_major('4.2.0')`               | `4`
+ `get_semver64_minor(semver)`      | Get minor version part          | `get_semver64_minor('4.2.0')`               | `2`
+ `get_semver64_patch(semver)`      | Get patch version part          | `get_semver64_patch('4.2.0')`               | `0`
+ `get_semver64_prerelease(semver)` | Get prerelease version part     | `get_semver64_prerelease('2.1.0-b2+bfb13')` | `b2`
 
 Numeric casts simply extract an integer from the decimal portion, so that `1.20`
 and `1.02` would both be parsed as `1.2.0` (but their string equivalents would
 not).
 
-The difference between `semver()` and `to_semver()` is that the former
-requires a valid semver format, while the latter is a bit more permissive,
-doing its best to convert other version number formats (including the older
-[semver 1.0.0-beta](https://semver.org/spec/v1.0.0-beta.html) prerelease
-format) to semantic versions:
+to_semver64 and semver64 are strict, only leading spaces are fixed
 
-    # select to_semver('1.0');
-     to_semver
-    -----------
-     1.0.0
-    (1 row)
-
-    # select to_semver('1.0beta1');
-     to_semver
-    -----------
-     1.0.0-beta1
-    (1 row)
-
-As for `is_semver()`, it returns true for a valid semver format, and false for
+As for `is_semver64()`, it returns true for a valid semver format, and false for
 anything else, including formats that `semver()` would convert to valid
 semvers. In other words, its interpretation of validity is strict.
 
-And finally, the `get_semver_*` functions all return integers except for
+And finally, the `get_semver64_*` functions all return integers except for
 `get_semver_prerelease()`, which returns text.
 
 ### Aggregate Functions ###
@@ -226,23 +185,23 @@ And finally, the `get_semver_*` functions all return integers except for
 The examples assume the values inserted into the `extensions` table in the above
 examples.
 
- Function      | Return Type | Description               | Example                                | Result
----------------|-------------|---------------------------|----------------------------------------|--------
- `MIN(semver)` |  `semver`   | Return the lowest semver  | `SELECT MIN(version) FROM extensions;` | `0.1.0`
- `MAX(semver)` |  `semver`   | Return the highest semver | `SELECT MAX(version) FROM extensions;` | `1.5.0`
+ Function        | Return Type   | Description               | Example                                | Result
+-----------------|---------------|---------------------------|----------------------------------------|--------
+ `MIN(semver64)` |  `semver64`   | Return the lowest semver  | `SELECT MIN(version) FROM extensions;` | `0.1.0`
+ `MAX(semver64)` |  `semver64`   | Return the highest semver | `SELECT MAX(version) FROM extensions;` | `1.5.0`
 
 ### Casts ###
 
- From             | To     | Example                         | Result
-------------------|--------|---------------------------------|---------
- text             | semver | `'1.2.1'::semver`               | `1.2.1`
- numeric          | semver | `1.2::semver`                   | `1.2.0`
- real             | semver | `12.0::real::semver`            | `12.0.0`
- double precision | semver | `9.2::double precision::semver` | `9.2.0`
- integer          | semver | `42::integer::semver`           | `42.0.0`
- bigint           | semver | `19::bigint::semver`            | `19.0.0`
- smallint         | semver | `2::smallint::semver`           | `2.0.0`
- semver           | text   | `'1.2.54'::semver::text`        | `1.2.54`
+ From             | To       | Example                           | Result
+------------------|----------|-----------------------------------|---------
+ text             | semver64 | `'1.2.1'::semver64`               | `1.2.1`
+ numeric          | semver64 | `1.2::semver64`                   | `1.2.0`
+ real             | semver64 | `12.0::real::semver64`            | `12.0.0`
+ double precision | semver64 | `9.2::double precision::semver64` | `9.2.0`
+ integer          | semver64 | `42::integer::semver64`           | `42.0.0`
+ bigint           | semver64 | `19::bigint::semver64`            | `19.0.0`
+ smallint         | semver64 | `2::smallint::semver64`           | `2.0.0`
+ semver64         | text     | `'1.2.54'::semver64::text`        | `1.2.54`
 
 Note that numeric casts simply extract an integer from the decimal portion, so
 that `1.20` and `1.02` would both be parsed as `1.2.0`  (but their string
@@ -250,8 +209,6 @@ equivalents would not).
 
 ### Range Type ###
 
-As of v0.20.0, the semver extension includes the `semverrange` type, which
-simply builds on the
 [range type](https://www.postgresql.org/docs/current/static/rangetypes.html)
 support on PostgreSQL 9.2 and higher. This allows for easy specification of
 ranges of semantic versions. Some examples:
@@ -262,41 +219,41 @@ ranges of semantic versions. Some examples:
  `['1.0.0', '2.0.0')`  | 1.0.0 inclusive - 2.0.0 exclusive
  `('1.0.0', '2.0.0')`  | 1.0.0 exclusive - 2.0.0 exclusive
  `['1.0.0',]`.         | 1.0.0 inclusive - infinity
- 
+
 The cool thing is that you can use any of the
 [range operators](https://www.postgresql.org/docs/current/static/functions-range.html),
 including the "contains" operators: For example, to see if `1.0.5` falls falls
 within the range `1.0.0` - `2.0.0` exclusive, run a query like this:
 
-    SELECT '1.0.5'::semver <@ '[1.0.0, 2.0.0)'::semverrange;
-     ?column? 
+    SELECT '1.0.5'::semver64 <@ '[1.0.0, 2.0.0)'::semver64range;
+     ?column?
     ----------
      t
 
-The `semverrange` constructor will build the same range, 
+The `semver64range` constructor will build the same range,
 
-    SELECT semverrange('1.0.0', '2.0.0') @> '2.0.0'::semver;
-     ?column? 
+    SELECT semver64range('1.0.0', '2.0.0') @> '2.0.0'::semver64;
+     ?column?
     ----------
      f
 
-    SELECT semverrange('1.0.0', '2.0.0') @> '1.9999.9999'::semver;
-     ?column? 
+    SELECT semver64range('1.0.0', '2.0.0') @> '1.9999.9999'::semver64;
+     ?column?
     ----------
      t
- 
+
 Pass the optional third argument to determine the bounds inclusiveness:
 
-    SELECT semverrange('1.0.0', '2.0.0', '[]') @> '2.0.0'::semver;
-     ?column? 
+    SELECT semver64range('1.0.0', '2.0.0', '[]') @> '2.0.0'::semver64;
+     ?column?
     ----------
      t
 
 It works for unlimited bound, as well. For example, this query ensure that
 a semver is greater than or equal `1.0.0`:
 
-    SELECT '1000.0.0'::semver <@ '[1.0.0,]'::semverrange;
-     ?column? 
+    SELECT '1000.0.0'::semver64 <@ '[1.0.0,]'::semver64range;
+     ?column?
     ----------
      t
 
@@ -306,17 +263,17 @@ less than `2.0.0`, but versions `1.2.3` and `1.4.5` have such serious bugs that
 you don't want to include them. We create three ranges that use exclusive
 bounds to omit those versions, like so:
 
-    '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semverrange[]
+    '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semver64range[]
 
 Here's an sample how to query such an array of semverranges.
 
     SELECT version, version <@ ANY(
-        '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semverrange[]
+        '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semver64range[]
     ) AS valid FROM (VALUES
-        ('1.0.0'::semver), ('1.0.1'), ('1.2.3'), ('1.2.4'), ('1.4.4'), ('1.4.5'),
+        ('1.0.0'::semver64), ('1.0.1'), ('1.2.3'), ('1.2.4'), ('1.4.4'), ('1.4.5'),
         ('1.7.0'), ('2.0.0')
     ) AS v(version)
-     version | valid 
+     version | valid
     ---------+-------
      1.0.0   | f
      1.0.1   | t
@@ -334,6 +291,7 @@ This library is stored in an open
 [GitHub repository](https://github.com/theory/pg-semver). Feel free to fork
 and contribute! Please file bug reports via
 [GitHub Issues](https://github.com/theory/pg-semver/issues/).
+
 
 Authors
 -------
@@ -367,4 +325,34 @@ The pg-semver Maintainers specifically disclaim any warranties, including, but
 not limited to, the implied warranties of merchantability and fitness for a
 particular purpose. The software provided hereunder is on an "as is" basis,
 and The pg-semver Maintainers no obligations to provide maintenance, support,
+updates, enhancements, or modifications.
+
+pg-semver64
+
+Author
+* [David Miguel](https://github.com/dvdmgl)
+
+Copyright and License
+---------------------
+
+Copyright (c) 2020 The pg-semver64 Maintainers: David Miguel.
+
+This module is free software; you can redistribute it and/or modify it under
+the [PostgreSQL License](https://www.opensource.org/licenses/postgresql).
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written agreement is
+hereby granted, provided that the above copyright notice and this paragraph
+and the following two paragraphs appear in all copies.
+
+In no event shall The pg-semver64 Maintainers be liable to any party for direct,
+indirect, special, incidental, or consequential damages, including lost
+profits, arising out of the use of this software and its documentation, even
+if The pg-semver64 Maintainers have been advised of the possibility of such
+damage.
+
+The pg-semver64 Maintainers specifically disclaim any warranties, including, but
+not limited to, the implied warranties of merchantability and fitness for a
+particular purpose. The software provided hereunder is on an "as is" basis,
+and The pg-semver64 Maintainers no obligations to provide maintenance, support,
 updates, enhancements, or modifications.

@@ -1,0 +1,29 @@
+FROM postgres:12.3-alpine
+
+ENV SEMVER64_VERSION 0.1.0
+
+RUN set -ex \
+    && apk add --no-cache \
+        autoconf \
+        automake \
+        file \
+        libtool \
+        make \
+        llvm10-dev \
+        pcre-dev \
+        perl \
+        clang-dev \
+        g++ \
+        gcc
+
+COPY . /usr/src/semver64
+RUN cd /usr/src/semver64 \
+    && make \
+    && make install
+
+# mkdir /tempdb \
+# && chown -R postgres:postgres /tempdb \
+# && su postgres -c 'pg_ctl -D /tempdb init' \
+# && su postgres -c 'pg_ctl -D /tempdb start' \
+# && cd /usr/src/semver64 \
+# && make installcheck PGUSER=postgres
