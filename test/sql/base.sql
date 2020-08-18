@@ -2,16 +2,16 @@
 BEGIN;
 
 \i test/pgtap-core.sql
-\i sql/semver.sql
+\i sql/semver64.sql
 
-SELECT plan(309);
+SELECT plan(291);
 --SELECT * FROM no_plan();
 
-SELECT has_type('semver');
-SELECT is( NULL::semver, NULL, 'semvers should be NULLable' );
+SELECT has_type('semver64');
+SELECT is( NULL::semver64, NULL, 'semvers should be NULLable' );
 
 SELECT lives_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     '"' || v || '" is a valid semver'
 )  FROM unnest(ARRAY[
     '1.2.2',
@@ -19,6 +19,8 @@ SELECT lives_ok(
     '0.0.0',
     '0.1.999',
     '9999.9999999.823823',
+    '18446744073709551615.823823.18446744073709551615',
+    '18446744073709551615.823823.18446744073709551615-beta2',
     '1.0.0-beta1',
     '1.0.0-beta2',
     '1.0.0',
@@ -33,7 +35,7 @@ SELECT lives_ok(
 ]) AS v;
 
 SELECT throws_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     NULL,
     '"' || v || '" is not a valid semver'
 )  FROM unnest(ARRAY[
@@ -58,25 +60,25 @@ SELECT throws_ok(
 
 -- Test =, <=, and >=.
 SELECT collect_tap(ARRAY[
-    ok(semver_cmp(lv::semver, rv::semver) = 0, 'semver(' || lv || ', ' || rv || ') should = 0'),
-    ok(lv::semver = rv::semver, 'v' || lv || ' should = v' || rv),
-    ok(lv::semver <= rv::semver, 'v' || lv || ' should be <= v' || rv),
-    ok(lv::semver >= rv::semver, 'v' || lv || ' should be >= v' || rv)
+    ok(semver64_cmp(lv::semver64, rv::semver64) = 0, 'semver64(' || lv || ', ' || rv || ') should = 0'),
+    ok(lv::semver64 = rv::semver64, 'v' || lv || ' should = v' || rv),
+    ok(lv::semver64 <= rv::semver64, 'v' || lv || ' should be <= v' || rv),
+    ok(lv::semver64 >= rv::semver64, 'v' || lv || ' should be >= v' || rv)
 ]) FROM (VALUES
     ('1.2.2',  '1.2.2'),
     ('1.2.23', '1.2.23'),
     ('0.0.0', '0.0.0'),
     ('999.888.7777', '999.888.7777'),
     ('0.1.2-beta3', '0.1.2-beta3'),
-    ('1.0.0-rc-1', '1.0.0-RC-1')
+    ('1.0.0-rc-1', '1.0.0-RC-1'),
+    ('18446744073709551615.18446744073709551615.18446744073709551615-rc-1', '18446744073709551615.18446744073709551615.18446744073709551615-RC-1')
  ) AS f(lv, rv);
 
 -- Test semver <> semver
 SELECT collect_tap(ARRAY[
-    ok(semver_cmp(lv::semver, rv::semver) <> 0, 'semver(' || lv || ', ' || rv || ') should <> 0'),
-    ok(lv::semver <> rv::semver, 'v' || lv || ' should not equal v' || rv)
+    ok(semver64_cmp(lv::semver64, rv::semver64) <> 0, 'semver64(' || lv || ', ' || rv || ') should <> 0'),
+    ok(lv::semver64 <> rv::semver64, 'v' || lv || ' should not equal v' || rv)
 ]) FROM (VALUES
-    ('1.2.2', '1.2.3'),
     ('0.0.1', '1.0.0'),
     ('1.0.1', '1.1.0'),
     ('1.1.1', '1.1.0'),
@@ -84,19 +86,22 @@ SELECT collect_tap(ARRAY[
     ('1.2.3', '1.2.3-b'),
     ('1.2.3-a', '1.2.3-b'),
     ('1.2.3-aaaaaaa1', '1.2.3-aaaaaaa2'),
-    ('1.2.3-1.2.3', '1.2.3-1.2.3.4')
+    ('1.2.3-1.2.3', '1.2.3-1.2.3.4'),
+    ('18446744073709551615.18446744073709551615.18446744073709551615', '18446744073709551615.18446744073709551615.18446744073709551614'),
+    ('18446744073709551615.18446744073709551615.18446744073709551615-1.2.3', '18446744073709551615.18446744073709551615.18446744073709551615-1.2.3.4')
   ) AS f(lv, rv);
 
 -- Test >, >=, <, and <=.
 SELECT collect_tap(ARRAY[
-    ok( semver_cmp(lv::semver, rv::semver) > 0, 'semver(' || lv || ', ' || rv || ') should > 0'),
-    ok( semver_cmp(rv::semver, lv::semver) < 0, 'semver(' || rv || ', ' || lv || ') should < 0'),
-    ok(lv::semver > rv::semver, 'v' || lv || ' should be > v' || rv),
-    ok(lv::semver >= rv::semver, 'v' || lv || ' should be >= v' || rv),
-    ok(rv::semver < lv::semver, 'v' || rv || ' should be < v' || lv),
-    ok(rv::semver <= lv::semver, 'v' || rv || ' should be <= v' || lv)
+    ok( semver64_cmp(lv::semver64, rv::semver64) > 0, 'semver64(' || lv || ', ' || rv || ') should > 0'),
+    ok( semver64_cmp(rv::semver64, lv::semver64) < 0, 'semver64(' || rv || ', ' || lv || ') should < 0'),
+    ok(lv::semver64 > rv::semver64, 'v' || lv || ' should be > v' || rv),
+    ok(lv::semver64 >= rv::semver64, 'v' || lv || ' should be >= v' || rv),
+    ok(rv::semver64 < lv::semver64, 'v' || rv || ' should be < v' || lv),
+    ok(rv::semver64 <= lv::semver64, 'v' || rv || ' should be <= v' || lv)
 ]) FROM (VALUES
     ('2.2.2', '1.1.1'),
+    ('18446744073709551615.0.0', '18446744073709551614.18446744073709551615.18446744073709551615'),
     ('2.2.2', '2.1.1'),
     ('2.2.2', '2.2.1'),
     ('2.2.2-b', '2.2.1'),
@@ -107,63 +112,20 @@ SELECT collect_tap(ARRAY[
     ('1.0.1-1.2.3', '1.0.1-0.9.9.9')
   ) AS f(lv, rv);
 
--- Test to_semver().
-SELECT has_function('to_semver');
-SELECT has_function('to_semver', ARRAY['text']);
-SELECT function_returns('to_semver', 'semver');
-
-SELECT is(
-    to_semver(dirty),
-    clean::semver,
-    'to_semver(' || dirty || ') should return ' || clean
-) FROM (VALUES
-    ('1.2.2',           '1.2.2'),
-    ('01.2.2',          '1.2.2'),
-    ('1.02.2',          '1.2.2'),
-    ('1.2.02',          '1.2.2'),
-    ('1.2.02b',        '1.2.2-b'),
-    ('1.2.02beta-3  ', '1.2.2-beta-3'),
-    ('1.02.02rc1',     '1.2.2-rc1'),
-    ('1.0',             '1.0.0'),
-    ('1',               '1.0.0'),
-    ('.0.02',           '0.0.2'),
-    ('1..02',           '1.0.2'),
-    ('1..',             '1.0.0'),
-    ('1.1',             '1.1.0'),
-    ('1.2.b1',          '1.2.0-b1'),
-    ('9.0beta4',        '9.0.0-beta4'), -- PostgreSQL format.
-    ('9b',              '9.0.0-b'),
-    ('rc1',             '0.0.0-rc1'),
-    ('',                '0.0.0'),
-    ('..2',             '0.0.2'),
-    ('1.2.3 a',         '1.2.3-a'),
-    ('..2 b',           '0.0.2-b'),
-    ('  012.2.2',       '12.2.2'),
-    ('20110204',        '20110204.0.0')
-) v(dirty, clean);
-
-SELECT is(
-    to_semver(clean),
-    clean::semver,
-    'to_semver(' || clean || ') should return incoming text'
-) FROM (VALUES
-    ('1.0.0-alpha'),               -- SV2 9.
-    ('1.0.0-alpha.1'),             -- SV2 9.
-    ('1.0.0-0.3.7'),               -- SV2 9.
-    ('1.0.0-x.7.z.92'),            -- SV2 9.
-    ('1.0.0-alpha+001'),           -- SV2 10.
-    ('1.0.0+20130313144700'),      -- SV2 10.
-    ('1.0.0-beta+exp.sha.5114f85') -- SV2 10.
-) v(clean);
+-- Test to_semver64().
+SELECT has_function('to_semver64');
+SELECT has_function('to_semver64', ARRAY['text']);
+SELECT function_returns('to_semver64', 'semver64');
 
 -- to_semver still needs to reject truly bad input
 SELECT throws_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     NULL,
     '"' || v || '" is not a valid semver'
 )  FROM unnest(ARRAY[
    '1.2.0 beta 4',
    '1.2.2-',
+   '1.02.2',
    '1.2.3b#5',
    'v1.2.2',
    '1.4b.0',
@@ -176,7 +138,7 @@ SELECT throws_ok(
 
 -- Test sort ordering
 CREATE TABLE vs (
-    version semver
+    version semver64
 );
 
 INSERT INTO vs VALUES ('1.2.0'), ('1.0.0'), ('1.0.0-p0'), ('0.9.9'), ('0.9.10');
@@ -189,61 +151,63 @@ SELECT is(min(version), '0.9.9', 'min(semver) should work')
 
 SELECT results_eq(
     $$ SELECT version FROM vs ORDER BY version USING < $$,
-    $$ VALUES ('0.9.9'::semver), ('0.9.10'::semver), ('1.0.0-p0'::semver), ('1.0.0'::semver), ('1.2.0'::semver) $$,
+    $$ VALUES ('0.9.9'::semver64), ('0.9.10'::semver64), ('1.0.0-p0'::semver64), ('1.0.0'::semver64), ('1.2.0'::semver64) $$,
     'ORDER BY semver USING < should work'
 );
 
 SELECT results_eq(
     $$ SELECT version FROM vs ORDER BY version USING > $$,
-    $$ VALUES ('1.2.0'::semver), ('1.0.0'::semver), ('1.0.0-p0'::semver), ('0.9.10'::semver), ('0.9.9'::semver) $$,
+    $$ VALUES ('1.2.0'::semver64), ('1.0.0'::semver64), ('1.0.0-p0'::semver64), ('0.9.10'::semver64), ('0.9.9'::semver64) $$,
     'ORDER BY semver USING > should work'
 );
 
 -- Test constructors.
-SELECT is( text('1.2.0'::semver), '1.2.0', 'construct to text' );
-SELECT is( semver('1.2.0'), '1.2.0'::semver, 'construct from text' );
-SELECT is( semver(1.2), '1.2.0'::semver, 'construct from bare number' );
-SELECT is( semver(1.2::numeric), '1.2.0'::semver, 'construct from numeric' );
-SELECT is( semver(1), '1.0.0'::semver, 'construct from bare integer' );
-SELECT is( semver(1::integer), '1.0.0'::semver, 'construct from integer' );
-SELECT is( semver(1::bigint), '1.0.0'::semver, 'construct from bigint' );
-SELECT is( semver(1::smallint), '1.0.0'::semver, 'construct from smallint' );
-SELECT is( semver(1.2::decimal), '1.2.0'::semver, 'construct from decimal' );
-SELECT is( semver(1.2::real), '1.2.0'::semver, 'construct from real' );
-SELECT is( semver(1.2::double precision), '1.2.0'::semver, 'construct from double' );
-SELECT is( semver(1.2::float), '1.2.0'::semver, 'construct from float' );
+SELECT is( text('1.2.0'::semver64), '1.2.0', 'construct to text' );
+SELECT is( semver64('1.2.0'), '1.2.0'::semver64, 'construct from text' );
+SELECT is( semver64(1.2), '1.2.0'::semver64, 'construct from bare number' );
+SELECT is( semver64(1.2::numeric), '1.2.0'::semver64, 'construct from numeric' );
+SELECT is( semver64(1), '1.0.0'::semver64, 'construct from bare integer' );
+SELECT is( semver64(1::integer), '1.0.0'::semver64, 'construct from integer' );
+SELECT is( semver64(1::bigint), '1.0.0'::semver64, 'construct from bigint' );
+SELECT is( semver64(1::smallint), '1.0.0'::semver64, 'construct from smallint' );
+SELECT is( semver64(1.2::decimal), '1.2.0'::semver64, 'construct from decimal' );
+SELECT is( semver64(1.2::real), '1.2.0'::semver64, 'construct from real' );
+SELECT is( semver64(1.2::double precision), '1.2.0'::semver64, 'construct from double' );
+SELECT is( semver64(1.2::float), '1.2.0'::semver64, 'construct from float' );
 
 -- Test casting.
-SELECT is( semver('1.2.0'::text), '1.2.0', 'cast to text' );
-SELECT is( text('1.2.0')::semver, '1.2.0'::semver, 'cast from text' );
-SELECT is( 1::semver, '1.0.0'::semver, 'Cast from bare integer');
-SELECT is( 1.2::semver, '1.2.0'::semver, 'Cast from bare number');
-SELECT is( 1.2::numeric::semver, '1.2.0'::semver, 'Cast from numeric');
-SELECT is( 1::integer::semver, '1.0.0'::semver, 'Cast from integer');
-SELECT is( 1::bigint::semver, '1.0.0'::semver, 'Cast from bigint');
-SELECT is( 1::smallint::semver, '1.0.0'::semver, 'Cast from smallint');
-SELECT is( 1.0::decimal::semver, '1.0.0'::semver, 'Cast from decimal');
-SELECT is( 1::decimal::semver, '1.0.0'::semver, 'Cast from decimal');
-SELECT is( 1.0::real::semver, '1.0.0'::semver, 'Cast from real');
-SELECT is( 1.0::double precision::semver, '1.0.0'::semver, 'Cast from double precision');
-SELECT is( 1.0::float::semver, '1.0.0'::semver, 'Cast from float');
+SELECT is( semver64('1.2.0'::text), '1.2.0', 'cast to text' );
+SELECT is( text('1.2.0')::semver64, '1.2.0'::semver64, 'cast from text' );
+SELECT is( 1::semver64, '1.0.0'::semver64, 'Cast from bare integer');
+SELECT is( 1.2::semver64, '1.2.0'::semver64, 'Cast from bare number');
+SELECT is( 1.2::numeric::semver64, '1.2.0'::semver64, 'Cast from numeric');
+SELECT is( 1::integer::semver64, '1.0.0'::semver64, 'Cast from integer');
+SELECT is( 1::bigint::semver64, '1.0.0'::semver64, 'Cast from bigint');
+SELECT is( 1::smallint::semver64, '1.0.0'::semver64, 'Cast from smallint');
+SELECT is( 1.0::decimal::semver64, '1.0.0'::semver64, 'Cast from decimal');
+SELECT is( 1::decimal::semver64, '1.0.0'::semver64, 'Cast from decimal');
+SELECT is( 1.0::real::semver64, '1.0.0'::semver64, 'Cast from real');
+SELECT is( 1.0::double precision::semver64, '1.0.0'::semver64, 'Cast from double precision');
+SELECT is( 1.0::float::semver64, '1.0.0'::semver64, 'Cast from float');
 
 -- Test casting some more.
 SELECT IS(lv::text, rv, 'Should correctly cast "' || rv || '" to text')
   FROM (VALUES
-    ('1.0.0-beta'::semver,   '1.0.0-beta'),
-    ('1.0.0-beta1'::semver,  '1.0.0-beta1'),
-    ('1.0.0-alpha'::semver,  '1.0.0-alpha'),
-    ('1.0.0-alph'::semver,   '1.0.0-alph'),
-    ('1.0.0-food'::semver,   '1.0.0-food'),
-    ('1.0.0-f111'::semver,   '1.0.0-f111'),
-    ('1.0.0-f111asbcdasdfasdfasdfasdfasdfasdffasdfadsf'::semver,
-     '1.0.0-f111asbcdasdfasdfasdfasdfasdfasdffasdfadsf')
+    ('1.0.0-beta'::semver64,   '1.0.0-beta'),
+    ('1.0.0-beta1'::semver64,  '1.0.0-beta1'),
+    ('1.0.0-alpha'::semver64,  '1.0.0-alpha'),
+    ('1.0.0-alph'::semver64,   '1.0.0-alph'),
+    ('1.0.0-food'::semver64,   '1.0.0-food'),
+    ('1.0.0-f111'::semver64,   '1.0.0-f111'),
+    ('1.0.0-f111asbcdasdfasdfasdfasdfasdfasdffasdfadsf'::semver64,
+     '1.0.0-f111asbcdasdfasdfasdfasdfasdfasdffasdfadsf'),
+    ('18446744073709551615.18446744073709551615.18446744073709551615-f111'::semver64,
+        '18446744073709551615.18446744073709551615.18446744073709551615-f111')
  ) AS f(lv, rv);
 
 -- SEMV 2.0.0 tests.
 SELECT lives_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     '"' || v || '" is a valid 2.0.0 semver'
 )  FROM unnest(ARRAY[
     '1.0.0+1',
@@ -260,7 +224,7 @@ SELECT lives_ok(
 ]) AS v;
 
 SELECT throws_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     NULL,
     '"' || v || '" is not a valid 2.0.0 semver'
 )  FROM unnest(ARRAY[
@@ -273,52 +237,39 @@ SELECT throws_ok(
 ]) AS v;
 
 DELETE FROM vs;
-INSERT INTO vs VALUES ('0.9.9-a1.1+1234'::semver), ('0.9.9-a1.2.3'::semver), ('0.9.9-a1.2'::semver), ('0.9.9'::semver), ('1.0.0+99'::semver), ('1.0.0-1'::semver);
+INSERT INTO vs VALUES ('0.9.9-a1.1+1234'::semver64), ('0.9.9-a1.2.3'::semver64), ('0.9.9-a1.2'::semver64), ('0.9.9'::semver64), ('1.0.0+99'::semver64), ('1.0.0-1'::semver64);
 
 SELECT results_eq(
     $$ SELECT version FROM vs ORDER BY version USING < $$,
-    $$ VALUES ('0.9.9-a1.1+1234'::semver), ('0.9.9-a1.2'::semver), ('0.9.9-a1.2.3'::semver), ('0.9.9'::semver), ('1.0.0-1'::semver), ('1.0.0+99'::semver) $$,
+    $$ VALUES ('0.9.9-a1.1+1234'::semver64), ('0.9.9-a1.2'::semver64), ('0.9.9-a1.2.3'::semver64), ('0.9.9'::semver64), ('1.0.0-1'::semver64), ('1.0.0+99'::semver64) $$,
     'ORDER BY semver (2.0.0) USING < should work'
 );
 
 SELECT results_eq(
     $$ SELECT version FROM vs ORDER BY version USING > $$,
-    $$ VALUES ('1.0.0+99'::semver), ('1.0.0-1'::semver), ('0.9.9'::semver), ('0.9.9-a1.2.3'::semver), ('0.9.9-a1.2'::semver), ('0.9.9-a1.1+1234'::semver) $$,
+    $$ VALUES ('1.0.0+99'::semver64), ('1.0.0-1'::semver64), ('0.9.9'::semver64), ('0.9.9-a1.2.3'::semver64), ('0.9.9-a1.2'::semver64), ('0.9.9-a1.1+1234'::semver64) $$,
     'ORDER BY semver (2.0.0) USING > should work'
 );
 
 SELECT collect_tap(ARRAY[
-    ok(semver_cmp(lv::semver, rv::semver) = 0, 'semver(' || lv || ', ' || rv || ') should = 0'),
-    ok(lv::semver = rv::semver, 'v' || lv || ' should = v' || rv),
-    ok(lv::semver <= rv::semver, 'v' || lv || ' should be <= v' || rv),
-    ok(lv::semver >= rv::semver, 'v' || lv || ' should be >= v' || rv)
+    ok(semver64_cmp(lv::semver64, rv::semver64) = 0, 'semver64(' || lv || ', ' || rv || ') should = 0'),
+    ok(lv::semver64 = rv::semver64, 'v' || lv || ' should = v' || rv),
+    ok(lv::semver64 <= rv::semver64, 'v' || lv || ' should be <= v' || rv),
+    ok(lv::semver64 >= rv::semver64, 'v' || lv || ' should be >= v' || rv)
 ]) FROM (VALUES
     ('1.0.0-1+1',  '1.0.0-1+5'),
     ('1.0.0-1.1+1',  '1.0.0-1.1+5')
  ) AS f(lv, rv);
 
--- Regressions.
-SELECT is(
-    to_semver(lv)::TEXT, rv,
-    'Should correctly represent "' || lv || '" as "' || rv || '"'
-) FROM (VALUES
-      ('0.5.0-release1', '0.5.0-release1'),
-      ('0.5.0release1',  '0.5.0-release1'),
-      ('0.5-release1',   '0.5.0-release1'),
-      ('0.5release1',    '0.5.0-release1'),
-      ('0.5-1',          '0.5.0-1'),
-      ('1.2.3-1.02',     '1.2.3-1.2')
-) AS f(lv, rv);
-
--- Test is_semver().
-SELECT has_function('is_semver');
-SELECT has_function('is_semver', ARRAY['text']);
-SELECT function_returns('is_semver', 'boolean');
+-- Test is_semver64().
+SELECT has_function('is_semver64');
+SELECT has_function('is_semver64', ARRAY['text']);
+SELECT function_returns('is_semver64', 'boolean');
 
 SELECT is(
-    is_semver(stimulus),
+    is_semver64(stimulus),
     expected,
-    'is_semver(' || stimulus || ') should return ' || expected::text
+    'is_semver64(' || stimulus || ') should return ' || expected::text
 ) FROM (VALUES
     ('1.2.2',                     true),
     ('0.2.2',                     true),
@@ -350,117 +301,116 @@ SELECT is(
 
 -- issue-gh-23
 SELECT lives_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     '"' || v || '" is a valid semver'
 )  FROM unnest(ARRAY[
     '2.3.0+80'
 ]) AS v;
-SELECT is(
-    to_semver(dirty),
-    clean::semver,
-    'to_semver(' || dirty || ') should return ' || clean
-) FROM (VALUES
-    ('2.3.0+80', '2.3.0+80')
-) v(dirty, clean);
+
 SELECT is(lv::text, rv, 'Should correctly cast "' || rv || '" to text')
   FROM (VALUES
-    ('2.3.0+80'::semver, '2.3.0+80')
+    ('2.3.0+80'::semver64, '2.3.0+80')
 ) AS f(lv, rv);
-SELECT isnt(lv::semver > rv::semver, true, '"' || lv || '" > "' || rv || '" (NOT!)')
+SELECT isnt(lv::semver64 > rv::semver64, true, '"' || lv || '" > "' || rv || '" (NOT!)')
   FROM (VALUES
     ('2.3.0+80', '2.3.0+110')
 ) AS f(lv, rv);
-SELECT is(lv::semver > rv::semver, true, '"' || lv || '" > "' || rv || '"')
+SELECT is(lv::semver64 > rv::semver64, true, '"' || lv || '" > "' || rv || '"')
   FROM (VALUES
     ('2.3.0+80', '2.3.0-alpha+110')
 ) AS f(lv, rv);
+
+
 CREATE TABLE vs23 (
-    version semver
+    version semver64
 );
 INSERT INTO vs23 VALUES ('1.0.0-alpha'), ('1.0.0-alpha.1'), ('1.0.0-alpha.beta'), ('1.0.0-beta'), ('1.0.0-beta.2'), ('1.0.0-beta.11'), ('1.0.0-rc.1'), ('1.0.0');
 SELECT results_eq(
     $$ SELECT version FROM vs23 ORDER BY version USING < $$,
-    $$ VALUES ('1.0.0-alpha'::semver), ('1.0.0-alpha.1'::semver), ('1.0.0-alpha.beta'::semver), ('1.0.0-beta'::semver), ('1.0.0-beta.2'::semver), ('1.0.0-beta.11'::semver), ('1.0.0-rc.1'::semver), ('1.0.0'::semver) $$,
+    $$ VALUES ('1.0.0-alpha'::semver64), ('1.0.0-alpha.1'::semver64), ('1.0.0-alpha.beta'::semver64), ('1.0.0-beta'::semver64), ('1.0.0-beta.2'::semver64), ('1.0.0-beta.11'::semver64), ('1.0.0-rc.1'::semver64), ('1.0.0'::semver64) $$,
     'ORDER BY semver USING < should work (section 11)'
 );
 SELECT results_eq(
     $$ SELECT version FROM vs23 ORDER BY version USING > $$,
-    $$ VALUES ('1.0.0'::semver), ('1.0.0-rc.1'::semver), ('1.0.0-beta.11'::semver), ('1.0.0-beta.2'::semver), ('1.0.0-beta'::semver), ('1.0.0-alpha.beta'::semver), ('1.0.0-alpha.1'::semver), ('1.0.0-alpha'::semver) $$,
+    $$ VALUES ('1.0.0'::semver64), ('1.0.0-rc.1'::semver64), ('1.0.0-beta.11'::semver64), ('1.0.0-beta.2'::semver64), ('1.0.0-beta'::semver64), ('1.0.0-alpha.beta'::semver64), ('1.0.0-alpha.1'::semver64), ('1.0.0-alpha'::semver64) $$,
     'ORDER BY semver USING > should work (section 11)'
 );
-SELECT is(lv::semver = rv::semver, true, '"' || lv || '" = "' || rv || '"')
+SELECT is(lv::semver64 = rv::semver64, true, '"' || lv || '" = "' || rv || '"')
   FROM (VALUES
     ('1.0.0', '1.0.0+535')
 ) AS f(lv, rv);
-SELECT isnt(lv::semver < rv::semver, true, '"' || lv || '" < "' || rv || '" (NOT!)')
+SELECT isnt(lv::semver64 < rv::semver64, true, '"' || lv || '" < "' || rv || '" (NOT!)')
   FROM (VALUES
     ('1.0.0', '1.0.0+535')
 ) AS f(lv, rv);
-SELECT isnt(lv::semver > rv::semver, true, '"' || lv || '" > "' || rv || '" (NOT!)')
+SELECT isnt(lv::semver64 > rv::semver64, true, '"' || lv || '" > "' || rv || '" (NOT!)')
   FROM (VALUES
     ('1.0.0', '1.0.0+535')
 ) AS f(lv, rv);
 
--- Test get_semver_major
-SELECT has_function('get_semver_major');
-SELECT has_function('get_semver_major', 'semver');
-SELECT function_returns('get_semver_major', 'integer');
-SELECT is(get_semver_major('2.1.0-alpha'::semver), 2, 'major version check');
+-- Test get_semver64_major
+SELECT has_function('get_semver64_major');
+SELECT has_function('get_semver64_major', 'semver');
+SELECT function_returns('get_semver64_major', 'text');
+SELECT is(get_semver64_major('2.1.0-alpha'::semver64), '2', 'major version check');
+SELECT is(get_semver64_major('18446744073709551615.1.2-f111'::semver64), '18446744073709551615', 'major version check');
 
--- Test get_semver_minor
-SELECT has_function('get_semver_minor');
-SELECT has_function('get_semver_minor', 'semver');
-SELECT function_returns('get_semver_minor', 'integer');
-SELECT is(get_semver_minor('2.1.0-alpha'::semver), 1, 'minor version check');
+-- Test get_semver64_minor
+SELECT has_function('get_semver64_minor');
+SELECT has_function('get_semver64_minor', 'semver');
+SELECT function_returns('get_semver64_minor', 'text');
+SELECT is(get_semver64_minor('2.1.0-alpha'::semver64), '1', 'minor version check');
+SELECT is(get_semver64_minor('2.18446744073709551615.3-f111'::semver64), '18446744073709551615', 'minor version check');
 
--- Test get_semver_patch
-SELECT has_function('get_semver_patch');
-SELECT has_function('get_semver_patch', 'semver');
-SELECT function_returns('get_semver_patch', 'integer');
-SELECT is(get_semver_patch('2.1.0-alpha'::semver), 0, 'patch version check');
+-- Test get_semver64_patch
+SELECT has_function('get_semver64_patch');
+SELECT has_function('get_semver64_patch', 'semver');
+SELECT function_returns('get_semver64_patch', 'text');
+SELECT is(get_semver64_patch('2.1.0-alpha'::semver64), '0', 'patch version check');
+SELECT is(get_semver64_patch('2.3.18446744073709551615-f111'::semver64), '18446744073709551615', 'minor version check');
 
--- Test get_semver_prerelease
-SELECT has_function('get_semver_prerelease');
-SELECT has_function('get_semver_prerelease', 'semver');
-SELECT function_returns('get_semver_prerelease', 'text');
-SELECT is(get_semver_prerelease('2.1.0-alpha'::semver), 'alpha', 'prerelease label check');
-SELECT is(get_semver_prerelease('2.1.0-alpha+build'::semver), 'alpha', 'prerelease label check. must return prerelease only');
-SELECT is(get_semver_prerelease('2.1.0+build'::semver), '', 'prerelease label check. must return empty string');
+-- Test get_semver64_prerelease
+SELECT has_function('get_semver64_prerelease');
+SELECT has_function('get_semver64_prerelease', 'semver');
+SELECT function_returns('get_semver64_prerelease', 'text');
+SELECT is(get_semver64_prerelease('2.1.0-alpha'::semver64), 'alpha', 'prerelease label check');
+SELECT is(get_semver64_prerelease('2.1.0-alpha+build'::semver64), 'alpha', 'prerelease label check. must return prerelease only');
+SELECT is(get_semver64_prerelease('2.1.0+build'::semver64), '', 'prerelease label check. must return empty string');
 
 -- Test range type.
 SELECT ok(
-    '1.0.0'::semver <@ '[1.0.0, 2.0.0]'::semverrange,
+    '1.0.0'::semver64 <@ '[1.0.0, 2.0.0]'::semver64range,
     '1.0.0 should be in range [1.0.0, 2.0.0]'
 );
 SELECT ok(
-    NOT '1.0.0'::semver <@ '[1.0.1, 2.0.0]'::semverrange,
+    NOT '1.0.0'::semver64 <@ '[1.0.1, 2.0.0]'::semver64range,
     '1.0.0 should not be in range [1.0.1, 2.0.0]'
 );
 
 SELECT ok(
-    NOT semverrange('1.0.0', '2.0.0') @> '2.0.0'::semver,
+    NOT semver64range('1.0.0', '2.0.0') @> '2.0.0'::semver64,
     '2.0.0 should not be in range [1.0.1, 2.0.0)'
 );
 
 SELECT ok(
-    semverrange('1.0.0', '2.0.0') @> '1.9999.9999'::semver,
+    semver64range('1.0.0', '2.0.0') @> '1.9999.9999'::semver64,
     '1.9999.9999 should be in range [1.0.1, 2.0.0)'
 );
 
 SELECT ok(
-    '1000.0.0'::semver <@ '[1.0.0,]'::semverrange,
+    '1000.0.0'::semver64 <@ '[1.0.0,]'::semver64range,
     '1000.0.0 should be in range [1.0.0,)'
 );
 
 SELECT bag_eq($$
     SELECT version, version <@ ANY(
-        '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semverrange[]
+        '{"(1.0.0,1.2.3)", "(1.2.3,1.4.5)", "(1.4.5,2.0.0)"}'::semver64range[]
     ) AS valid FROM (VALUES
-        ('1.0.0'::semver), ('1.0.1'), ('1.2.3'), ('1.2.4'), ('1.4.4'), ('1.4.5'),
+        ('1.0.0'::semver64), ('1.0.1'), ('1.2.3'), ('1.2.4'), ('1.4.4'), ('1.4.5'),
         ('1.7.0'), ('2.0.0')
     ) AS v(version)
 $$, $$ VALUES
-    ('1.0.0'::semver, false),
+    ('1.0.0'::semver64, false),
     ('1.0.1', true),
     ('1.2.3', false),
     ('1.2.4', true),
@@ -472,20 +422,20 @@ $$, 'Should be able to work with arrays of semverranges');
 
 -- Test formatting (issue-gh-48)
 SELECT is(
-    '1.0.0+1234567890123456789012345'::semver::text,
+    '1.0.0+1234567890123456789012345'::semver64::text,
     '1.0.0+1234567890123456789012345',
     'Should properly format a 32 character semver'
 );
 
 SELECT is(
-    '1.0.0+12345678901234567890123456'::semver::text,
+    '1.0.0+12345678901234567890123456'::semver64::text,
     '1.0.0+12345678901234567890123456',
     'Should properly format a 33 character semver'
 );
 
 -- issue-gh-46
 SELECT is(
-    '1.0.0-alpha-0'::semver::text, '1.0.0-alpha-0',
+    '1.0.0-alpha-0'::semver64::text, '1.0.0-alpha-0',
     'Should propery format a prerelease with a hyphen'
 );
 

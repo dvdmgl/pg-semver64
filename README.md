@@ -1,15 +1,24 @@
-semver 0.22.0
+semver64 0.1.0
 =============
 
-[![PGXN version](https://badge.fury.io/pg/semver.svg)](https://badge.fury.io/pg/semver)
-[![Build Status](https://github.com/theory/pg-semver/workflows/CI/badge.svg)](https://github.com/theory/pg-semver/actions)
+This library is a fork of https://github.com/theory/pg-semver with u64 major, minor and patch, binary support for compatibility with [rust postgres](https://github.com/sfackler/rust-postgres/) and rust [semver](https://github.com/steveklabnik/semver) crate.
+
+It is strict semver regex, only forgives leading spaces.
+
+*Note on binary support:*
+
+
+The pre-release metadata does not send and should not receive `'-'`.
 
 This library contains a single PostgreSQL extension, a data type called
-"semver". It's an implementation of the version number format specified by the
+"semver64". It's an implementation of the version number format specified by the
 [Semantic Versioning 2.0.0 Specification](https://semver.org/spec/v2.0.0.html).
 
 Installation
 ------------
+
+Requirements:
+    pcre-dev
 
 To build semver:
 
@@ -98,4 +107,28 @@ The pg-semver Maintainers specifically disclaim any warranties, including, but
 not limited to, the implied warranties of merchantability and fitness for a
 particular purpose. The software provided hereunder is on an "as is" basis,
 and The pg-semver Maintainers no obligations to provide maintenance, support,
+updates, enhancements, or modifications.
+
+
+pg-semver64
+Copyright (c) 2020 The pg-semver64 Maintainers: David Miguel.
+
+This module is free software; you can redistribute it and/or modify it under
+the [PostgreSQL License](https://www.opensource.org/licenses/postgresql).
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written agreement is
+hereby granted, provided that the above copyright notice and this paragraph
+and the following two paragraphs appear in all copies.
+
+In no event shall The pg-semver64 Maintainers be liable to any party for direct,
+indirect, special, incidental, or consequential damages, including lost
+profits, arising out of the use of this software and its documentation, even
+if The pg-semver64 Maintainers have been advised of the possibility of such
+damage.
+
+The pg-semver64 Maintainers specifically disclaim any warranties, including, but
+not limited to, the implied warranties of merchantability and fitness for a
+particular purpose. The software provided hereunder is on an "as is" basis,
+and The pg-semver64 Maintainers no obligations to provide maintenance, support,
 updates, enhancements, or modifications.

@@ -4,14 +4,13 @@ BEGIN;
 -- Test the SemVer corpus from https://regex101.com/r/Ly7O1x/3/.
 
 \i test/pgtap-core.sql
-\i sql/semver.sql
+\i sql/semver64.sql
 
-SELECT plan(71);
+SELECT plan(74);
 --SELECT * FROM no_plan();
-
 -- Valid Semantic Versions
 SELECT lives_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     '"' || v || '" is a valid semver'
 )  FROM unnest(ARRAY[
     '0.0.4',
@@ -43,19 +42,17 @@ SELECT lives_ok(
     '1.2.3----R-S.12.9.1--.12+meta',
     '1.2.3----RC-SNAPSHOT.12.9.1--.12',
     '1.0.0+0.build.1-rc.10000aaa-kk-0.1',
-    '1.0.0-0A.is.legal'
-    -- 
+    '1.0.0-0A.is.legal',
+    '1.18446744073709551615.18446744073709551615',
+    '18446744073709551615.1.18446744073709551615',
+    '18446744073709551615.18446744073709551615.1',
+    '18446744073709551615.18446744073709551615.18446744073709551614'
+    --
 ]) AS v;
-
-SELECT todo('Large versions overflow integer bounds', 1);
-SELECT lives_ok(
-    $$ SELECT '99999999999999999999999.999999999999999999.99999999999999999'::semver $$,
-    '"99999999999999999999999.999999999999999999.99999999999999999" is a valid semver'
-);
 
 -- Invalid Semantic Versions
 SELECT throws_ok(
-    $$ SELECT '$$ || v || $$'::semver $$,
+    $$ SELECT '$$ || v || $$'::semver64 $$,
     NULL,
     '"' || v || '" is not a valid semver'
 )  FROM unnest(ARRAY[
